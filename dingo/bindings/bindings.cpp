@@ -112,40 +112,40 @@ double HPolytopeCPP::apply_sampling(int walk_len,
 
    NT variance = variance_value;
 
-   if (strcmp(method, "cdhr")) { // cdhr
+   if (!strcmp(method, "cdhr")) { // cdhr
       uniform_sampling<CDHRWalk>(rand_points, HP, rng, walk_len, number_of_points,
                                  starting_point, number_of_points_to_burn);
-   } else if (strcmp(method, "rdhr")) { // rdhr
+   } else if (!strcmp(method, "rdhr")) { // rdhr
       uniform_sampling<RDHRWalk>(rand_points, HP, rng, walk_len, number_of_points,
                                  starting_point, number_of_points_to_burn);
-   } else if (strcmp(method, "billiard_walk")) { // accelerated_billiard
+   } else if (!strcmp(method, "billiard_walk")) { // accelerated_billiard
       uniform_sampling<AcceleratedBilliardWalk>(rand_points, HP, rng, walk_len,
                                                 number_of_points, starting_point,
                                                 number_of_points_to_burn);
-   } else if (strcmp(method, "ball_walk")) { // ball walk
+   } else if (!strcmp(method, "ball_walk")) { // ball walk
       uniform_sampling<BallWalk>(rand_points, HP, rng, walk_len, number_of_points,
                                  starting_point, number_of_points_to_burn);
-   } else if (strcmp(method, "dikin_walk")) { // dikin walk
+   } else if (!strcmp(method, "dikin_walk")) { // dikin walk
       uniform_sampling<DikinWalk>(rand_points, HP, rng, walk_len, number_of_points,
                                   starting_point, number_of_points_to_burn);
-   } else if (strcmp(method, "john_walk")) { // john walk
+   } else if (!strcmp(method, "john_walk")) { // john walk
       uniform_sampling<JohnWalk>(rand_points, HP, rng, walk_len, number_of_points,
                                  starting_point, number_of_points_to_burn);
-   } else if (strcmp(method, "vaidya_walk")) { // vaidya walk
+   } else if (!strcmp(method, "vaidya_walk")) { // vaidya walk
       uniform_sampling<VaidyaWalk>(rand_points, HP, rng, walk_len, number_of_points,
                                    starting_point, number_of_points_to_burn);
-   } else if (strcmp(method, "mmcs")) { // vaidya walk
+   } else if (!strcmp(method, "mmcs")) { // vaidya walk
       MT S;
       int total_ess;
       //TODO: avoid passing polytopes as non-const references
       const Hpolytope HP_const = HP;
       mmcs(HP_const, ess, S, total_ess, walk_len, rng);
       samples = S.data();
-   } else if (strcmp(method, "gaussian_hmc_walk")) { // Gaussian sampling with exact HMC walk
+   } else if (!strcmp(method, "gaussian_hmc_walk")) { // Gaussian sampling with exact HMC walk
       NT a = NT(1)/(NT(2)*variance);
       gaussian_sampling<GaussianHamiltonianMonteCarloExactWalk>(rand_points, HP, rng, walk_len, number_of_points, a,
                                    starting_point, number_of_points_to_burn);
-   } else if (strcmp(method, "exponential_hmc_walk")) { // exponential sampling with exact HMC walk
+   } else if (!strcmp(method, "exponential_hmc_walk")) { // exponential sampling with exact HMC walk
       VT c(d);
       for (int i = 0; i < d; i++){
          c(i) = bias_vector_[i];
@@ -153,9 +153,9 @@ double HPolytopeCPP::apply_sampling(int walk_len,
       Point bias_vector(c);
       exponential_sampling<ExponentialHamiltonianMonteCarloExactWalk>(rand_points, HP, rng, walk_len, number_of_points, bias_vector, variance,
                                    starting_point, number_of_points_to_burn);
-   } else if (strcmp(method, "hmc_leapfrog_gaussian")) { // HMC with Gaussian distribution
+   } else if (!strcmp(method, "hmc_leapfrog_gaussian")) { // HMC with Gaussian distribution
       rand_points = hmc_leapfrog_gaussian(walk_len, number_of_points, number_of_points_to_burn, variance, starting_point, HP);
-   } else if (strcmp(method, "hmc_leapfrog_exponential")) { // HMC with exponential distribution
+   } else if (!strcmp(method, "hmc_leapfrog_exponential")) { // HMC with exponential distribution
       VT c(d);
       for (int i = 0; i < d; i++) {
          c(i) = bias_vector_[i];
@@ -170,7 +170,7 @@ double HPolytopeCPP::apply_sampling(int walk_len,
       throw std::runtime_error("This function must not be called.");
    }
 
-   if (!strcmp(method, "mmcs")) {
+   if (strcmp(method, "mmcs")) {
     // The following block of code allows us to copy the sampled points
     auto n_si=0;
     for (auto it_s = rand_points.cbegin(); it_s != rand_points.cend(); it_s++){
@@ -461,7 +461,7 @@ void HPolytopeCPP::apply_rounding(int rounding_method, double* new_A, double* ne
 
    // run the rounding method
    if (rounding_method == 1) { // max ellipsoid
-      round_res = inscribed_ellipsoid_rounding<MT, VT, NT>(P, CheBall.first);
+      round_res = inscribed_ellipsoid_rounding<MT, VT, NT>(P, CheBall.first, 1);
 
    } else if (rounding_method == 2) { // isotropization
       round_res = svd_rounding<AcceleratedBilliardWalk, MT, VT>(P, CheBall, 1, rng);
@@ -470,6 +470,18 @@ void HPolytopeCPP::apply_rounding(int rounding_method, double* new_A, double* ne
                                                                                             CheBall,
                                                                                             walk_len,
                                                                                             rng);
+   } else if(rounding_method == 4) { // log barrier
+      round_res = inscribed_ellipsoid_rounding<MT, VT, NT, Hpolytope, Point, EllipsoidType::LOG_BARRIER>(P,
+                                                                                                        CheBall.first);
+   
+   } else if(rounding_method == 5) { // volumetric barrier
+      round_res = inscribed_ellipsoid_rounding<MT, VT, NT, Hpolytope, Point, EllipsoidType::VOLUMETRIC_BARRIER>(P,
+                                                                                                               CheBall.first);
+   
+   } else if(rounding_method == 6) { // vaidya barrier
+      round_res = inscribed_ellipsoid_rounding<MT, VT, NT, Hpolytope, Point, EllipsoidType::VAIDYA_BARRIER>(P,
+                                                                                                           CheBall.first);
+   
    } else {
       throw std::runtime_error("Unknown rounding method.");
    }
@@ -511,4 +523,51 @@ void HPolytopeCPP::apply_rounding(int rounding_method, double* new_A, double* ne
    round_value = get<2>(round_res);
 
 }
+
+// compute the max inscribed ellipsoid and take the ratio of the max over the min axes (measure how close to John position it is)
+void HPolytopeCPP::assess_rounding(double &min_axis, double &max_axis) {
+      auto P(HP);
+   RNGType rng(P.dimension());
+   P.normalize();
+   Point inner_point = Point(compute_feasible_point(P.get_mat(), P.get_vec()));
+   unsigned int maxiter = 500, iter = 1, d = P.dimension();
+   VT x0 = inner_point.getCoefficients(), center, shift = VT::Zero(d);
+   MT E, L, T = MT::Identity(d, d);
+   bool converged;
+   NT R = 100.0, r = 1.0, tol = std::pow(10, -6.0), reg = std::pow(10, -4.0), round_val = 1.0;
+
+   // Compute the desired inscribed ellipsoid in P
+   std::tie(E, center, converged) =
+      compute_inscribed_ellipsoid<MT, EllipsoidType::MAX_ELLIPSOID>(P.get_mat(), P.get_vec(), x0, maxiter, tol, reg);
+
+   E = (E + E.transpose()) / 2.0;
+   E += MT::Identity(d, d)*std::pow(10, -8.0); //normalize E
+
+   Eigen::LLT<MT> lltOfA(E.llt().solve(MT::Identity(E.cols(), E.cols()))); // compute the Cholesky decomposition of E^{-1}
+   L = lltOfA.matrixL();
+
+   // Computing eigenvalues of E
+   Spectra::DenseSymMatProd<NT> op(E);
+   // The value of ncv is chosen empirically
+   Spectra::SymEigsSolver<NT, Spectra::SELECT_EIGENVALUE::BOTH_ENDS,
+                          Spectra::DenseSymMatProd<NT>> eigs(&op, 2, std::min(std::max(10, int(d)/5), int(d)));
+   eigs.init();
+   int nconv = eigs.compute();
+   if (eigs.info() == Spectra::COMPUTATION_INFO::SUCCESSFUL) {
+      R = 1.0 / eigs.eigenvalues().coeff(1);
+      r = 1.0 / eigs.eigenvalues().coeff(0);
+   } else {
+      Eigen::SelfAdjointEigenSolver<MT> eigensolver(E);
+      if (eigensolver.info() == Eigen::ComputationInfo::Success) {
+         R = 1.0 / eigensolver.eigenvalues().coeff(0);
+         r = 1.0 / eigensolver.eigenvalues().template tail<1>().value();
+      } else {
+         std::runtime_error("Computations failed.");
+      }
+   }
+
+   min_axis = r;
+   max_axis = R;
+}
+
 //////////         End of "rounding()"          //////////

@@ -72,6 +72,8 @@ cdef extern from "bindings.h":
       void apply_rounding(int rounding_method, double* new_A, double* new_b, double* T_matrix, \
                           double* shift, double &round_value, double* inner_point, double radius);
 
+      void assess_rounding(double &min_axis, double &max_axis);
+
    # The lowDimPolytopeCPP class along with its functions
    cdef cppclass lowDimHPolytopeCPP:
 
@@ -122,7 +124,7 @@ cdef class HPolytope:
                         variance_value, bias_vector, solver = None, ess = 1000):
 
       n_variables = self._A.shape[1]
-      cdef double[:,::1] samples = np.zeros((number_of_points, n_variables), dtype = np.float64, order = "C")
+      cdef double[:,::1] samples = np.ones((number_of_points, n_variables), dtype = np.float64, order = "C")
 
       # Get max inscribed ball for the initial polytope
       temp_center, radius = inner_ball(self._A, self._b, solver)
@@ -162,8 +164,14 @@ cdef class HPolytope:
          int_method = 2
       elif rounding_method == 'min_ellipsoid':
          int_method = 3
+      elif rounding_method == 'log_barrier':
+         int_method = 4
+      elif rounding_method == 'volumetric_barrier':
+         int_method = 5
+      elif rounding_method == 'vaidya_barrier':
+         int_method = 6
       else:
-         raise RuntimeError("Uknown rounding method")
+         raise RuntimeError("Unknown rounding method")
 
       self.polytope_cpp.apply_rounding(int_method, &new_A[0,0], &new_b[0], &T_matrix[0,0], &shift[0], round_value, &inner_point_for_c[0], radius)
 
@@ -215,3 +223,9 @@ cdef class HPolytope:
 
    def dimension(self):
       return self._A.shape[1]
+
+   def assess_rounding(self):
+      cdef double min_axis, max_axis
+      self.polytope_cpp.assess_rounding(min_axis, max_axis)
+
+      return min_axis, max_axis, max_axis / min_axis
