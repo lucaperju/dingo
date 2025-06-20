@@ -432,7 +432,8 @@ void HPolytopeCPP::get_mmcs_samples(double* T_matrix, double* T_shift, double* s
 //////////         Start of "rounding()"          //////////
 void HPolytopeCPP::apply_rounding(int rounding_method, double* new_A, double* new_b,
                                   double* T_matrix, double* shift, double &round_value,
-                                  double* inner_point, double radius){
+                                  double* inner_point, double radius, double reg, 
+                                  double tol){
 
    // make a copy of the initial HP which will be used for the rounding step
    auto P(HP);
@@ -461,7 +462,7 @@ void HPolytopeCPP::apply_rounding(int rounding_method, double* new_A, double* ne
 
    // run the rounding method
    if (rounding_method == 1) { // max ellipsoid
-      round_res = inscribed_ellipsoid_rounding<MT, VT, NT>(P, CheBall.first);
+      round_res = inscribed_ellipsoid_rounding<MT, VT, NT>(P, CheBall.first, 1, 6, reg, tol);
 
    } else if (rounding_method == 2) { // isotropization
       round_res = svd_rounding<AcceleratedBilliardWalk, MT, VT>(P, CheBall, 1, rng);
