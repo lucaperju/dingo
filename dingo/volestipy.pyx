@@ -70,7 +70,8 @@ cdef extern from "bindings.h":
 
       # Rounding H-Polytope
       void apply_rounding(int rounding_method, double* new_A, double* new_b, double* T_matrix, \
-                          double* shift, double &round_value, double* inner_point, double radius);
+                          double* shift, double &round_value, double* inner_point, double radius,
+                          double reg, double tol);
 
       void assess_rounding(double &min_axis, double &max_axis);
 
@@ -173,7 +174,10 @@ cdef class HPolytope:
       else:
          raise RuntimeError("Unknown rounding method")
 
-      self.polytope_cpp.apply_rounding(int_method, &new_A[0,0], &new_b[0], &T_matrix[0,0], &shift[0], round_value, &inner_point_for_c[0], radius)
+      reg = 1e-3
+      tol = 1e-6
+
+      self.polytope_cpp.apply_rounding(int_method, &new_A[0,0], &new_b[0], &T_matrix[0,0], &shift[0], round_value, &inner_point_for_c[0], radius, reg, tol)
 
       return np.asarray(new_A),np.asarray(new_b),np.asarray(T_matrix),np.asarray(shift),np.asarray(round_value)
 
