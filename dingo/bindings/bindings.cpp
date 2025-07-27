@@ -441,7 +441,6 @@ void HPolytopeCPP::apply_rounding(int rounding_method, double* new_A, double* ne
    P.normalize();
 
 
-
    // read the inner point provided by the user and the radius
    int d = P.dimension();
    VT inner_vec(d);
@@ -462,7 +461,7 @@ void HPolytopeCPP::apply_rounding(int rounding_method, double* new_A, double* ne
 
    // run the rounding method
    if (rounding_method == 1) { // max ellipsoid
-      round_res = inscribed_ellipsoid_rounding<MT, VT, NT>(P, CheBall.first, 1, 6, reg, tol);
+      round_res = inscribed_ellipsoid_rounding<MT, VT, NT>(P, CheBall.first, 1, 6);
 
    } else if (rounding_method == 2) { // isotropization
       round_res = svd_rounding<AcceleratedBilliardWalk, MT, VT>(P, CheBall, 1, rng);
@@ -539,7 +538,7 @@ void HPolytopeCPP::assess_rounding(double &min_axis, double &max_axis) {
 
    // Compute the desired inscribed ellipsoid in P
    std::tie(E, center, converged) =
-      compute_inscribed_ellipsoid<MT, EllipsoidType::MAX_ELLIPSOID>(P.get_mat(), P.get_vec(), x0, maxiter, tol, reg);
+      compute_inscribed_ellipsoid<MT, EllipsoidType::MAX_ELLIPSOID, MT, VT, NT>(P.get_mat(), P.get_vec(), x0);
 
    E = (E + E.transpose()) / 2.0;
    E += MT::Identity(d, d)*std::pow(10, -8.0); //normalize E

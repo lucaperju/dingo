@@ -63,13 +63,13 @@ def test_rounding(rounding_method, transformed_polytope, name):
         end   = time.time()
         A = rounded_polytope.A.to_numpy()
         b = rounded_polytope.b.to_numpy()
-        #result = evaluate_rounding_quality(A, b)
+        result = evaluate_rounding_quality(A, b)
         P = HPolytope(A, b)
         min_axis, max_axis, ratio = P.assess_rounding()
         print("Polytope derived from the " + name + " network, took " + str(end - start) + " sec to get rounded with PolyRound. With ratio " + str(ratio));
-        #print("Scaling estimate (should be ~1):", result['scaling_factor'])
-        #print("Frobenius norm error:", result['frobenius_error'])
-        #print("Spectral norm error:", result['spectral_error'])
+        print("Scaling estimate (should be ~1):", result['scaling_factor'])
+        print("Frobenius norm error:", result['frobenius_error'])
+        print("Spectral norm error:", result['spectral_error'])
         print("\n\n")
     else:
         A = transformed_polytope.A.to_numpy()
@@ -78,13 +78,13 @@ def test_rounding(rounding_method, transformed_polytope, name):
         start = time.time()
         A_rounded, b_rounded, x, y, z = P.rounding(rounding_method, None)
         end   = time.time()
-        #result = evaluate_rounding_quality(A_rounded, b_rounded)
+        result = evaluate_rounding_quality(A_rounded, b_rounded)
         P = HPolytope(A_rounded, b_rounded)
         min_axis, max_axis, ratio = P.assess_rounding()
         print("Polytope derived from the " + name + " network, took " + str(end - start) + " sec to get rounded with " + rounding_method + ". With ratio " + str(ratio));
-        #print("Scaling estimate (should be ~1):", result['scaling_factor'])
-        #print("Frobenius norm error:", result['frobenius_error'])
-        #print("Spectral norm error:", result['spectral_error'])
+        print("Scaling estimate (should be ~1):", result['scaling_factor'])
+        print("Frobenius norm error:", result['frobenius_error'])
+        print("Spectral norm error:", result['spectral_error'])
         print("\n\n")
 
 def polyround_preprocess(model_path):
